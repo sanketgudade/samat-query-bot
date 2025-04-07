@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Team - Smart QueryBot</title>
+    <style>
+        /* Global styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: url('1.jpeg') no-repeat center center/cover;
+            text-align: center;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Lower z-index for particles */
+        }
+    
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            position: relative; /* Ensure container is positioned */
+            z-index: 2; /* Higher z-index for container */
+        }
+    
+
+        .header-container {
+            background: linear-gradient(135deg, #007bff, #ff69b4);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        .logo {
+            position: absolute;
+            top: 35px;
+            left: 10px;
+            width: 170px; /* Adjust size as needed */
+            height: auto;
+        }
+        h1 {
+            font-family: 'Georgia', serif;
+            font-weight: bold;
+            font-size: 42px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgb(35, 163, 188);
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .intro {
+            font-size: 20px;
+            color: #333;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            animation: slideIn 1s ease-in-out;
+        }
+
+        .intro p {
+          white-space: nowrap;
+          overflow: hidden;
+        }
+
+        .intro p span {
+          display: inline-block;
+          padding-left: 100%;
+          animation: marquee 10s linear infinite;
+        }
+
+        @keyframes marquee {
+          0% {
+            transform: translate(0, 0);
+          }
+          100% {
+            transform: translate(-100%, 0);
+          }
+        }
+
+        .team-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .team-member {
+            background: rgba(238, 214, 233, 0.9);
+            border-radius: 20px;
+            padding: 25px;
+            width: 280px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            animation: fadeInUp 1s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .team-member:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .team-member img {
+            width: 100%;
+            max-width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 15px;
+            transition: transform 0.3s ease-in-out;
+            position: relative;
+            z-index: 1;
+        }
+
+        .team-member:hover img {
+            transform: scale(1.1);
+        }
+
+        /* Sparkling Blue Light Effect */
+        .team-member::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 123, 255, 0.5), transparent 70%);
+            animation: rotateLight 4s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes rotateLight {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .team-member h3 {
+            font-size: 24px;
+            color: #007bff;
+            margin-top: 15px;
+            font-weight: bold;
+            position: relative;
+            z-index: 1;
+        }
+
+        .team-member h4 {
+            font-size: 18px;
+            color: #333;
+            margin-top: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .social-links a img {
+            width: 40px;
+            height: 40px;
+            transition: transform 0.3s ease-in-out;
+            border-radius: 50%;
+        }
+
+        .social-links a img:hover {
+            transform: scale(1.2);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 32px;
+            }
+
+            .intro {
+                font-size: 18px;
+            }
+
+            .team-member {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+    <div class="container">
+        <div class="header-container">
+            <h1>🎊🚀Our Team 💻👨🏻‍💻</h1>
+        </div>
+        <img src="logo.png" alt="Logo" class="logo">
+
+        <div class="intro">
+            <h1><marquee>👋🎊 Hello everyone! This is our team. We built something amazing together! Feel free to reach out. Let's connect! 🤝</marquee></h1>
+        </div>
+
+        <div class="team-container">
+            <div class="team-member">
+                <img src="sanket.jpg" alt="Sanket Rajkumar Gudade">
+                <h3>Sanket Rajkumar Gudade</h3>
+                <h1>2213021</h1>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/sanket_gudade_006/" target="_blank">
+                        <img src="insta.gif" alt="Instagram">
+                    </a>
+                    <a href="https://www.linkedin.com/in/sanket-gudade-139891337" target="_blank">
+                        <img src="linkdin.gif" alt="LinkedIn">
+                    </a>
+                </div></div>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+        <script>
+            particlesJS("particles-js", {
+                "particles": {
+                    "number": {
+                        "value": 25,
+                        "density": {
+                            "enable": true,
+                            "value_area": 800
+                        }
+                    },
+                    "color": { "value": "#00aaff" },
+                    "shape": { "type": "circle" },
+                    "opacity": { "value": 0.8, "random": false },
+                    "size": { "value": 8, "random": true },
+                    "move": { "enable": true, "speed": 1.5, "direction": "none", "random": false, "straight": false },
+                    "line_linked": {
+                        "enable": true,
+                        "distance": 250,
+                        "color": "#00aaff",
+                        "opacity": 0.5,
+                        "width": 2
+                    }
+                },
+                "interactivity": {
+                    "detect_on": "canvas",
+                    "events": {
+                        "onhover": { "enable": true, "mode": "grab" },
+                        "onclick": { "enable": true, "mode": "push" }
+                    }
+                }
+            });
+        </script>
+    </body>
+    </html>
