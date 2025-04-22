@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartQueryBot - SQL Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        /* Hide scrollbars but keep functionality */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        * {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: rgba(63, 186, 235, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: "Comic Sans MS", sans-serif;
+            overflow: hidden;
+        }
+
+        /* Larger Main Container */
+        .main-container {
+            width: 95%;
+            max-width: 1400px;
+            height: 95vh;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 20px;
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Sidebar Styles */
+        .sidebar-container {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+        }
+
+        .history-container {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .history-item {
+            padding: 12px;
+            margin: 10px 0;
+            background: rgba(66, 133, 244, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+
+        .history-item:hover {
+            background: rgba(66, 133, 244, 0.2);
+        }
+
+        /* Main Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        /* Connection Info */
+        .connection-section {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .connection-heading {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #2c5e9e;
+        }
+
+        .connection-select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-family: "Comic Sans MS", sans-serif;
+            font-size: 16px;
+        }
+
+        /* Mode Section */
+        .mode-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            gap: 10px;
+        }
+
+        .mode-button {
+            flex: 1;
+            padding: 14px;
+            background:rgb(67, 137, 250);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: "Comic Sans MS", sans-serif;
+            font-size: 17px;
+            transition: all 0.2s;
+        }
+
+        .mode-button.active {
+            background:rgb(0, 27, 62);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Query Input */
+        .query-input-section {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .query-heading {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #2c5e9e;
+        }
+
+        .query-input {
+            width: 100%;
+            min-height: 120px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: "Comic Sans MS", sans-serif;
+            font-size: 17px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .generate-button {
+            background: #4285F4;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: "Comic Sans MS", sans-serif;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .generate-button:hover {
+            background: #2c5e9e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .sql-result {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: "Comic Sans MS", sans-serif;
+            font-size: 15px;
+            z-index: 10;
+        }
+
+        .copy-button:hover {
+            background: #2c5e9e;
+        }
+
+        pre {
+            margin: 0;
+            padding: 25px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-size: 16px;
+            position: relative;
+        }
+
+        /* Explanation Section */
+        .explanation-section {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #d1e8ff;
+        }
+
+        .explanation-heading {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #2c5e9e;
+        }
+
+        .explanation-content {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* User Info */
+        .user-info {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 18px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .logout-button {
+            margin-left: 10px;
+            color: #4285F4;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-info">
+        <span id="usernameDisplay">Logout</span>
+        <a href="/logout" class="logout-button" title="Logout">
+            <i class="fas fa-sign-out-alt"></i>
+        </a>
+    </div>
+
+    <div class="main-container">
+        <!-- Sidebar (History) -->
+        <div class="sidebar-container">
+            <div class="history-container">
+                <h3>Query History</h3>
+                <div class="history-list" id="historyList">
+                    <!-- History items will be populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-area">
+            <!-- Connection Section -->
+            <div class="connection-section">
+                <div class="connection-heading">Connection</div>
+                <select class="connection-select" id="dbType">
+                    <option>PostgreSQL</option>
+                    <option>MySQL</option>
+                    <option>SQL Server</option>
+                    <option>Oracle</option>
+                    <option>SQLite</option>
+                    <option>MongoDB (NoSQL)</option>
+                    <option>Cassandra (NoSQL)</option>
+                </select>
+            </div>
+
+            <!-- Mode Section -->
+            <div class="mode-section">
+                <button class="mode-button active" data-mode="generate">Generate Query</button>
+                <button class="mode-button" data-mode="optimize">Optimize Query</button>
+                <button class="mode-button" data-mode="explain">Explain Query</button>
+            </div>
+
+            <!-- Query Input -->
+            <div class="query-input-section">
+                <div class="query-heading">Describe what you need</div>
+                <textarea class="query-input" id="queryInput" placeholder="I want to create a query that efficiently fetches users across the schema..."></textarea>
+                <button class="generate-button" id="generateBtn">Generate SQL✨</button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <div class="query-heading">Generated SQL</div>
+                <div class="sql-result">
+                    <button class="copy-button" id="copyBtn">Copy SQL</button>
+                    <pre><code class="language-sql" id="sqlResult"></code></pre>
+                </div>
+            </div>
+
+            <!-- Explanation Section -->
+            <div class="explanation-section" id="explanationSection">
+                <div class="explanation-heading">Explanation</div>
+                <div class="explanation-content" id="explanationContent">
+                    <!-- Explanation will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize syntax highlighting
+        hljs.highlightAll();
+
+        // DOM Elements
+        const modeButtons = document.querySelectorAll('.mode-button');
+        const queryInput = document.getElementById('queryInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const sqlResult = document.getElementById('sqlResult');
+        const historyList = document.getElementById('historyList');
+        const dbTypeSelect = document.getElementById('dbType');
+        const explanationContent = document.getElementById('explanationContent');
+        const explanationSection = document.getElementById('explanationSection');
+
+        // Set initial mode
+        let currentMode = 'generate';
+
+        // Mode selection functionality
+        modeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Update active button
+                modeButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                currentMode = button.dataset.mode;
+                
+                // Update placeholder text
+                switch(currentMode) {
+                    case 'generate':
+                        queryInput.placeholder = "Describe what data you need...";
+                        break;
+                    case 'optimize':
+                        queryInput.placeholder = "Paste or write your SQL query to optimize...";
+                        break;
+                    case 'explain':
+                        queryInput.placeholder = "Paste or write your SQL query to explain...";
+                        break;
+                }
+            });
+        });
+
+        // Copy button functionality (improved)
+        copyBtn.addEventListener('click', async () => {
+            const sqlToCopy = sqlResult.innerText;
+            if (!sqlToCopy.trim()) {
+                copyBtn.innerText = "Nothing to copy!";
+                setTimeout(() => copyBtn.innerText = "Copy SQL", 2000);
+                return;
+            }
+
+            try {
+                // Try modern clipboard API first
+                await navigator.clipboard.writeText(sqlToCopy);
+                copyBtn.innerText = "Copied!";
+            } catch (err) {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = sqlToCopy;
+                textarea.style.position = 'fixed';
+                document.body.appendChild(textarea);
+                textarea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    copyBtn.innerText = "Copied!";
+                } catch (err) {
+                    copyBtn.innerText = "Failed!";
+                } finally {
+                    document.body.removeChild(textarea);
+                }
+            }
+            
+            setTimeout(() => {
+                copyBtn.innerText = "Copy SQL";
+            }, 2000);
+        });
+
+        // Generate SQL functionality
+        generateBtn.addEventListener('click', async () => {
+            const query = queryInput.value.trim();
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+            
+            // Show loading state
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            generateBtn.disabled = true;
+            
+            try {
+                const response = await fetch('http://localhost:5006/api/generate-sql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        mode: currentMode,
+                        db_type: dbTypeSelect.value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Always display clean SQL in the SQL box
+                    sqlResult.innerText = data.sql;
+                    
+                    // Handle explanation based on mode
+                    if (currentMode === 'generate') {
+                        explanationContent.innerHTML = `
+                            <strong>Query Explanation:</strong>
+                            <p>${data.explanation || 'No explanation provided'}</p>
+                        `;
+                    } 
+                    else if (currentMode === 'optimize') {
+                        explanationContent.innerHTML = `
+                            <div style="margin-bottom: 15px;">
+                                <strong>Original Query:</strong>
+                                <pre style="background: #f0f0f0; padding: 10px; border-radius: 5px;">${query}</pre>
+                            </div>
+                            <div>
+                                <strong>Optimization Explanation:</strong>
+                                <p>${data.explanation || 'No explanation provided'}</p>
+                            </div>
+                        `;
+                    }
+                    else if (currentMode === 'explain') {
+                        explanationContent.innerHTML = `
+                            <strong>Explanation:</strong>
+                            <p>${data.explanation || 'No explanation provided'}</p>
+                        `;
+                    }
+                    
+                    // Add to history
+                    addToHistory(query, data.sql);
+                } else {
+                    throw new Error(data.error || 'Failed to process query');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                sqlResult.innerText = `Error: ${error.message}`;
+            } finally {
+                generateBtn.innerHTML = 'Generate SQL✨';
+                generateBtn.disabled = false;
+                hljs.highlightAll();
+            }
+        });
+
+        // Add query to history
+        function addToHistory(userQuery, sql) {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            
+            // Truncate long queries for display
+            const displayText = userQuery.length > 50 
+                ? userQuery.substring(0, 47) + '...' 
+                : userQuery;
+            
+            historyItem.textContent = displayText;
+            historyItem.title = userQuery;
+            
+            // Click to reuse the query
+            historyItem.addEventListener('click', () => {
+                queryInput.value = userQuery;
+                
+                // Switch to appropriate mode if clicking an optimized/explained query
+                if (userQuery.includes('SELECT') || userQuery.includes('FROM')) {
+                    const optimizeBtn = document.querySelector('[data-mode="optimize"]');
+                    optimizeBtn.click();
+                }
+            });
+            
+            // Add to the top of the history list
+            historyList.insertBefore(historyItem, historyList.firstChild);
+            
+            // Limit history to 20 items
+            if (historyList.children.length > 20) {
+                historyList.removeChild(historyList.lastChild);
+            }
+        }
+
+        // Load sample history items
+        const sampleHistory = [
+            "Find all active users",
+            "Optimize user query",
+            "Explain join operation",
+            "Create users table",
+            "Add index to users"
+        ];
+
+        sampleHistory.forEach(item => {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            historyItem.textContent = item;
+            historyItem.addEventListener('click', () => {
+                queryInput.value = item;
+            });
+            historyList.appendChild(historyItem);
+        });
+
+        // Initialize with generate mode active
+        document.querySelector('[data-mode="generate"]').click();
+    </script>
+    
+</body>
+</html>

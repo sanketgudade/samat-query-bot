@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment for SmartQueryBot Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            background: url('static/1.jpeg') no-repeat center center/cover;
+            padding: 20px;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: var(--dark);
+        }
+        
+        .logo {
+            width: 210px;
+            height: 80px;
+            margin: 0 auto 15px;
+            background-color: var(--primary);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: var(--shadow);
+        }
+        
+        h2 {
+            color: var(--primary);
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            color: #6c757d;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .price-tag {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-bottom: 20px;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+        }
+        
+        .payment-box {
+            border: none;
+            border-radius: 15px;
+            padding: 30px;
+            background-color: white;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .payment-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+        }
+        
+        .upi-container {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px dashed #adb5bd;
+            position: relative;
+        }
+        
+        .upi-id {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        
+        .qr-code {
+            width: 180px;
+            height: 180px;
+            margin: 15px auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+        }
+        
+        .copy-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: var(--transition);
+        }
+        
+        .copy-btn:hover {
+            background-color: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        .or-divider {
+            display: flex;
+            align-items: center;
+            margin: 25px 0;
+            color: #adb5bd;
+        }
+        
+        .or-divider::before, .or-divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .or-divider::before {
+            margin-right: 15px;
+        }
+        
+        .or-divider::after {
+            margin-left: 15px;
+        }
+        
+        .payment-btn {
+            background: white;
+            color: var(--dark);
+            border: 1px solid #dee2e6;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            margin: 10px 0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            width: 100%;
+            justify-content: center;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+        
+        .payment-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .payment-btn img {
+            height: 24px;
+            margin-right: 10px;
+        }
+        
+        .gpay {
+            border-color: #4285F4;
+            color: #4285F4;
+        }
+        
+        .phonepe {
+            border-color: #5f259f;
+            color: #5f259f;
+        }
+        
+        .verify-section {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .transaction-input {
+            width: 100%;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+        
+        .transaction-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+        
+        .verify-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+            font-weight: 500;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+        
+        .verify-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+        }
+        
+        .note {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 15px;
+        }
+        
+        .payment-methods {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">SmartQueryBot</div>
+    <h2>SmartQueryBot Pro Access</h2>
+    <p class="subtitle">Unlock premium features with a small contribution</p>
+    <div class="price-tag">Only ₹1/month</div>
+
+    <div class="payment-box">
+        <h3 style="margin-top: 0; color: var(--primary);">Payment Methods</h3>
+        
+        <div class="upi-container">
+            <p style="margin: 0; font-size: 14px; color: #6c757d;">Scan QR code or send payment to:</p>
+            
+            <!-- QR Code Section -->
+            <div style="margin: 15px 0;">
+                <img src="Qr.jpg" alt="UPI QR Code" class="qr-code">
+            </div>
+            
+            <div class="upi-id">sanketgudade2004@okicici</div>
+            <button class="copy-btn" onclick="copyUpiId()">Copy UPI ID</button>
+        </div>
+
+        <div class="or-divider">OR</div>
+
+        <button class="payment-btn gpay" onclick="initiateGPay()">
+            <img src="https://cdn.worldvectorlogo.com/logos/google-pay-1.svg" alt="GPay">
+            Pay with Google Pay
+        </button>
+
+        <button class="payment-btn phonepe" onclick="initiatePhonePe()">
+            <img src="pp-Photoroom.png" alt="PhonePe">
+            Pay with PhonePe
+        </button>
+
+        <div id="statusMessage" class="status-message"></div>
+
+        <div class="verify-section">
+            <h4 style="margin-bottom: 5px;">Payment Verification</h4>
+            <p style="margin-top: 0; font-size: 14px; color: #6c757d;">Enter your transaction ID after payment</p>
+            
+            <input type="text" id="transactionId" class="transaction-input" placeholder="e.g. 1234567890ABCDEF">
+            
+            <button class="verify-btn" onclick="verifyPayment()">
+                I've Paid ₹1 - Verify Now
+            </button>
+            
+            <p class="note">
+                You'll find the transaction ID in your payment app's transaction history.
+                Verification usually takes less than 1 minute.
+            </p>
+        </div>
+    </div>
+    
+    <div style="margin-top: 30px; font-size: 14px; color: #6c757d;">
+        <p>By proceeding, you agree to our <a href="#" style="color: var(--primary); text-decoration: none;">Terms of Service</a></p>
+    </div>
+    <div class="user-info" style="position: absolute; top: 20px; right: 20px;">
+        <span id="usernameDisplay"></span>
+        <button onclick="logout()" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/get_username')
+            .then(response => response.json())
+            .then(data => {
+                if (data.username) {
+                    document.getElementById('usernameDisplay').textContent = data.username;
+                }
+            });
+    });
+    
+    function logout() {
+        fetch('/logout')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/login';
+                }
+            });
+    }
+    </script>
+    <script>
+        function copyUpiId() {
+            const upiId = 'sanketgudade2004@okicici';
+            navigator.clipboard.writeText(upiId).then(() => {
+                showStatus('UPI ID copied to clipboard!', 'success');
+            });
+        }
+        
+        function initiateGPay() {
+            showStatus('Opening Google Pay...', 'success');
+            // Simulate opening GPay (in a real app, this would be a UPI deep link)
+            setTimeout(() => {
+                showStatus('Please complete payment in Google Pay app', 'success');
+                simulatePaymentCompletion();
+            }, 2000);
+        }
+        
+        function initiatePhonePe() {
+            showStatus('Opening PhonePe...', 'success');
+            // Simulate opening PhonePe (in a real app, this would be a UPI deep link)
+            setTimeout(() => {
+                showStatus('Please complete payment in PhonePe app', 'success');
+                simulatePaymentCompletion();
+            }, 2000);
+        }
+        
+        function simulatePaymentCompletion() {
+            // In a real app, this would be handled by the UPI callback
+            setTimeout(() => {
+                showStatus('Payment completed! Please enter transaction ID and verify', 'success');
+            }, 5000);
+        }
+        
+        function verifyPayment() {
+            const transactionId = document.getElementById('transactionId').value.trim();
+            const statusDiv = document.getElementById('statusMessage');
+            
+            if (!transactionId) {
+                showStatus('Please enter a transaction ID', 'error');
+                return;
+            }
+            
+            showStatus('Verifying payment...', 'success');
+            
+            // Send to backend for verification
+            fetch('/verify-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ transaction_id: transactionId }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('Payment verified successfully! Redirecting...', 'success');
+                    // Redirect to success page or activate features
+                    setTimeout(() => {
+                        window.location.href = '/success';
+                    }, 2000);
+                } else {
+                    showStatus('Payment verification failed. Please check the transaction ID', 'error');
+                }
+            })
+            .catch(error => {
+                showStatus('Error verifying payment. Please try again later.', 'error');
+                console.error('Error:', error);
+            });
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message ${type}`;
+            statusDiv.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verify session on page load
+            fetch('/check_session')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.logged_in) {
+                        window.location.href = '/login';
+                    }
+                });
+            
+            // Modify verifyPayment function to include session
+            function verifyPayment() {
+                fetch('/check_session')
+                    .then(response => response.json())
+                    .then(sessionData => {
+                        if (!sessionData.logged_in) {
+                            window.location.href = '/login';
+                            return;
+                        }
+                        
+                        const transactionId = document.getElementById('transactionId').value.trim();
+                        if (!transactionId) {
+                            showStatus('Please enter a transaction ID', 'error');
+                            return;
+                        }
+                        
+                        fetch('/verify-payment', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ 
+                                transaction_id: transactionId,
+                                username: sessionData.username 
+                            }),
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showStatus('Payment verified! Redirecting...', 'success');
+                                setTimeout(() => {
+                                    window.location.href = '/AdvanceSQB';
+                                }, 2000);
+                            }
+                        });
+                    });
+            }
+        });
+    </script>
+</body>
+</html>

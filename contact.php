@@ -63,11 +63,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         body {
             background: linear-gradient(135deg, #007bff, #ff69b4);
             color: #333;
-            min-height: 100vh;
+            min-height: 80vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 40px;
+            padding: 20px;
             position: relative;
             overflow: hidden;
         }
@@ -80,10 +80,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             width: 100%;
             background: white;
-            padding: 40px;
+            padding: 10px;
             border-radius: 16px;
             box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
             display: flex;

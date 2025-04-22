@@ -245,7 +245,7 @@
             gap: 10px;
             background: none;
             border: none;
-            color: white;
+            color: black;
             font-size: 16px;
             cursor: pointer;
         }
@@ -464,7 +464,7 @@
         <button onclick="newChat()" data-tooltip="New Chat">
             <img src="static/newchat.webp" alt="New Chat">
         </button>
-        <button onclick="smartQueryBot()" data-tooltip="SmartQueryBot">
+        <button onclick="smartQueryBot()" data-tooltip="Advance SmartQueryBot">
             <img src="static/bot.png" alt="Bot">
         </button>
         <button onclick="searchFunction()" data-tooltip="Search">
@@ -480,6 +480,7 @@
     <style>
         .history-container {
             margin-top: 20px;
+            
             color: #333;
         }
     
@@ -491,7 +492,7 @@
         }
     
         .history-list {
-            max-height: 60vh;
+            max-height: 75vh;
             overflow-y: auto;
         }
     
@@ -527,6 +528,7 @@
             padding: 10px;
         }
     </style>
+    
     <div class="message-container">
         <div class="message-display" id="messageDisplay"></div>
         <input type="text" id="userInput" placeholder="Type your message..." onkeydown="if (event.key === 'Enter') sendMessage()">
@@ -567,8 +569,8 @@
             transform: scale(1.2);
         }
         </style>
-   <script>
-// Global variables for speech recognition
+<script>
+
 let speechTranscript = '';
 let recognition;
 let isListening = false;
@@ -579,7 +581,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton'); // Added reference to send button
 
-    // Check for speech recognition support
     if ('webkitSpeechRecognition' in window) {
         recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.continuous = true; // Keep listening continuously
@@ -947,11 +948,12 @@ function stopListening() {
         }
 
         function newChat() {
-            alert("Starting new chat...");
+            location.reload();
         }
+        
 
         function smartQueryBot() {
-            alert("Opening SmartQueryBot...");
+            window.open("http://localhost/hack/pricing.html", "_blank");
         }
 
         function searchFunction() {
@@ -1246,6 +1248,25 @@ function stopListening() {
             loadChatHistory();
             // ... your existing DOMContentLoaded code
         });
+
+        function smartQueryBot() {
+            fetch('/check_session')
+                .then(response => {
+                    if (!response.ok) throw new Error('Session check failed');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.logged_in) {
+                        window.location.href = '/pricing';
+                    } else {
+                        window.location.href = '/login';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    window.location.href = '/login';
+                });
+        }
         </script>
 </body>
 </html>
