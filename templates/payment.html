@@ -218,6 +218,33 @@
         .phonepe:hover {
             background-color: rgba(95, 37, 159, 0.05);
         }
+
+        .paytm {
+            border-color: #00baf2;
+            color: #00baf2;
+        }
+        
+        .paytm:hover {
+            background-color: rgba(0, 186, 242, 0.05);
+        }
+
+        .amazonpay {
+            border-color: #FF9900;
+            color: #FF9900;
+        }
+        
+        .amazonpay:hover {
+            background-color: rgba(255, 153, 0, 0.05);
+        }
+
+        .any-upi {
+            border-color: #6c757d;
+            color: #6c757d;
+        }
+        
+        .any-upi:hover {
+            background-color: rgba(108, 117, 125, 0.05);
+        }
         
         .verify-section {
             margin-top: 25px;
@@ -239,6 +266,62 @@
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .file-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .file-upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            width: 100%;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .file-upload-label:hover {
+            border-color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+
+        .file-upload-icon {
+            font-size: 40px;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .file-upload-text {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .file-upload-subtext {
+            font-size: 12px;
+            color: #adb5bd;
+        }
+
+        #file-name {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--dark);
+            display: none;
+        }
+
+        #receipt-preview {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 15px;
+            border-radius: 8px;
+            display: none;
         }
         
         .verify-btn {
@@ -405,8 +488,9 @@
             
             <!-- QR Code Section -->
             <div style="margin: 15px 0;">
-                <img src="templates/Qr.jpg" alt="UPI QR Code" class="qr-code">
+                <img src="{{ url_for('static', filename='Qr.jpg') }}" alt="UPI QR Code" class="qr-code" width="200">
             </div>
+            
             
             <div class="upi-id">sanketgudade2004@okicici</div>
             <button class="copy-btn" id="copyUpiBtn">
@@ -422,17 +506,43 @@
         </button>
 
         <button class="payment-btn phonepe">
-            <img src="pp-Photoroom.png" alt="PhonePe">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/PhonePe_Logo.svg/300px-PhonePe_Logo.svg.png" alt="PhonePe">
             Pay with PhonePe
+        </button>
+
+        <button class="payment-btn paytm">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/4/42/Paytm_logo.png" alt="Paytm">
+            Pay with Paytm
+        </button>
+
+        <button class="payment-btn amazonpay">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon Pay">
+            Pay with Amazon Pay
+        </button>
+
+        <button class="payment-btn any-upi" id="openUpiAppBtn">
+            <i class="fas fa-mobile-alt" style="font-size: 24px; margin-right: 10px;"></i>
+            Open Any UPI App
         </button>
 
         <div id="statusMessage" class="status-message"></div>
 
         <div class="verify-section">
             <h4 style="margin-bottom: 5px;">Payment Verification</h4>
-            <p style="margin-top: 0; font-size: 14px; color: #6c757d;">Enter your transaction ID after payment</p>
+            <p style="margin-top: 0; font-size: 14px; color: #6c757d;">Enter your transaction ID and upload payment receipt</p>
             
             <input type="text" id="transactionId" class="transaction-input" placeholder="e.g. 1234567890ABCDEF">
+            
+            <div class="file-upload">
+                <label for="receipt-upload" class="file-upload-label" id="file-upload-label">
+                    <i class="fas fa-cloud-upload-alt file-upload-icon"></i>
+                    <span class="file-upload-text">Upload Payment Receipt</span>
+                    <span class="file-upload-subtext">JPG, PNG or PDF (Max 5MB)</span>
+                </label>
+                <input type="file" id="receipt-upload" accept="image/*,.pdf" style="display: none;">
+                <div id="file-name"></div>
+                <img id="receipt-preview" alt="Receipt Preview">
+            </div>
             
             <button class="verify-btn" id="verifyBtn">
                 <i class="fas fa-check-circle"></i> I've Paid ₹1 - Verify Now
@@ -478,24 +588,103 @@
                 });
             });
 
-            // Payment buttons hover effects
-            const paymentBtns = document.querySelectorAll('.payment-btn');
-            paymentBtns.forEach(btn => {
-                btn.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-3px)';
-                });
-                btn.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                });
+            // Open any UPI app
+            document.getElementById('openUpiAppBtn').addEventListener('click', function() {
+                const upiId = 'sanketgudade2004@okicici';
+                const amount = '1';
+                const note = 'SmartQueryBot Pro Subscription';
+                
+                // Try to open UPI apps in sequence
+                const upiLinks = [
+                    `upi://pay?pa=${upiId}&pn=SmartQueryBot&am=${amount}&tn=${note}`,
+                    `tez://upi/pay?pa=${upiId}&pn=SmartQueryBot&am=${amount}&tn=${note}`,
+                    `phonepe://pay?pa=${upiId}&pn=SmartQueryBot&am=${amount}&tn=${note}`,
+                    `paytmmp://pay?pa=${upiId}&pn=SmartQueryBot&am=${amount}&tn=${note}`,
+                    `amazonpay://pay?pa=${upiId}&pn=SmartQueryBot&am=${amount}&tn=${note}`
+                ];
+                
+                // Function to try opening links one by one
+                const tryOpenLink = (index) => {
+                    if (index >= upiLinks.length) {
+                        // Fallback to copying UPI ID
+                        navigator.clipboard.writeText(upiId).then(() => {
+                            showStatus('UPI ID copied to clipboard. Please paste it in your UPI app.', 'success');
+                        });
+                        return;
+                    }
+                    
+                    const link = document.createElement('a');
+                    link.href = upiLinks[index];
+                    link.click();
+                    
+                    setTimeout(() => {
+                        tryOpenLink(index + 1);
+                    }, 300);
+                };
+                
+                tryOpenLink(0);
             });
 
-            // Verify button loading effect
+            // File upload handling
+            const fileUpload = document.getElementById('receipt-upload');
+            const fileName = document.getElementById('file-name');
+            const receiptPreview = document.getElementById('receipt-preview');
+            const fileUploadLabel = document.getElementById('file-upload-label');
+            
+            fileUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Check file size (5MB max)
+                    if (file.size > 5 * 1024 * 1024) {
+                        showStatus('File size exceeds 5MB limit', 'error');
+                        return;
+                    }
+                    
+                    // Check file type
+                    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+                    if (!validTypes.includes(file.type)) {
+                        showStatus('Please upload JPG, PNG or PDF file', 'error');
+                        return;
+                    }
+                    
+                    // Display file name
+                    fileName.textContent = `Selected: ${file.name}`;
+                    fileName.style.display = 'block';
+                    
+                    // If it's an image, show preview
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            receiptPreview.src = e.target.result;
+                            receiptPreview.style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        receiptPreview.style.display = 'none';
+                    }
+                    
+                    // Update label appearance
+                    fileUploadLabel.innerHTML = `
+                        <i class="fas fa-check-circle file-upload-icon" style="color: var(--success);"></i>
+                        <span class="file-upload-text">Receipt uploaded</span>
+                        <span class="file-upload-subtext">Click to change</span>
+                    `;
+                }
+            });
+
+            // Verify button functionality
             const verifyBtn = document.getElementById('verifyBtn');
             verifyBtn.addEventListener('click', function() {
                 const transactionId = document.getElementById('transactionId').value.trim();
+                const file = fileUpload.files[0];
                 
                 if (!transactionId) {
                     showStatus('Please enter a transaction ID', 'error');
+                    return;
+                }
+                
+                if (!file) {
+                    showStatus('Please upload payment receipt', 'error');
                     return;
                 }
                 
@@ -503,15 +692,40 @@
                 verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
                 verifyBtn.disabled = true;
                 
-                // Simulate verification (replace with actual API call)
-                setTimeout(() => {
-                    verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verified! Redirecting...';
-                    showStatus('Payment verified successfully!', 'success');
-                    
-                    setTimeout(() => {
-                        window.location.href = '/AdvanceSQB';
-                    }, 1500);
-                }, 2000);
+                // Create FormData to send to server
+                const formData = new FormData();
+                formData.append('transaction_id', transactionId);
+                formData.append('receipt', file);
+                formData.append('username', document.getElementById('usernameDisplay').textContent);
+                formData.append('plan', 'pro'); // Or get this from URL params
+                
+                // Send to server for verification
+                fetch('/submit_payment', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verified! Redirecting...';
+                        showStatus('Payment submitted for verification! Admin will review it shortly.', 'success');
+                        
+                        // Redirect to thank you page or home
+                        setTimeout(() => {
+                            window.location.href = '/thank_you';
+                        }, 1500);
+                    } else {
+                        verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify Payment';
+                        verifyBtn.disabled = false;
+                        showStatus(data.message || 'Verification failed. Please try again.', 'error');
+                    }
+                })
+                .catch(error => {
+                    verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify Payment';
+                    verifyBtn.disabled = false;
+                    showStatus('Error verifying payment. Please try again.', 'error');
+                    console.error('Error:', error);
+                });
             });
 
             // Show status message

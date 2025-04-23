@@ -142,7 +142,7 @@ def get_chat_history():
                      FROM chat_history 
                      WHERE user_id = %s 
                      ORDER BY timestamp DESC 
-                     LIMIT 20"""
+                     LIMIT 200"""
             cursor.execute(sql, (session['user_name'],))
             results = cursor.fetchall()
         

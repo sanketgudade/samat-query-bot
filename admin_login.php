@@ -24,7 +24,7 @@ try {
         if ($admin && $admin["password"] === $password_input) {
             $_SESSION["admin_logged_in"] = true;
             $_SESSION["admin_email"] = $email;
-            echo "<script>window.location.href = 'admin_panel.html';</script>";
+            echo "<script>window.location.href = 'admin_panel.php';</script>";
             exit();
         } else {
             echo "<script>alert('Invalid Email or Password');</script>";
