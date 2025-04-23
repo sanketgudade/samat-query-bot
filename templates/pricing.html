@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartQueryBot Plans</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: url('static/1.jpeg') no-repeat center center/cover;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      padding: 60px 0 20px;
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: #555;
+      margin-bottom: 40px;
+    }
+
+    .plans {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 25px;
+    }
+
+    .plan-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 30px;
+      width: 300px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+      position: relative;
+      transition: transform 0.3s ease;
+    }
+
+    .plan-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .popular-badge {
+      position: absolute;
+      top: -12px;
+      right: 20px;
+      background: #10a37f;
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .plan-name {
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .plan-price {
+      font-size: 2.5rem;
+      color: #10a37f;
+      margin: 10px 0;
+    }
+
+    .plan-period {
+      color: #666;
+      margin-bottom: 15px;
+    }
+
+    .plan-features {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+    }
+
+    .plan-features li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .plan-features li::before {
+      content: "✓";
+      color: #10a37f;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+
+    .current-plan {
+      background: #f0f7f5;
+      border: 2px solid #10a37f;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px;
+      background: #10a37f;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      text-align: center;
+      width: 100%;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 20px;
+      transition: background 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #0d8e6f;
+    }
+
+    .current-btn {
+      background: white;
+      color: #10a37f;
+      border: 2px solid #10a37f;
+    }
+
+    .current-btn:hover {
+      background: #e5f4f0;
+    }
+
+    .billing-help {
+      text-align: center;
+      margin-top: 30px;
+      color: #666;
+    }
+
+    .billing-help a {
+      color: #10a37f;
+      text-decoration: none;
+    }
+
+    .user-box {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #usernameDisplay {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .logout-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .logout-btn:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="user-box">
+    <span id="usernameDisplay">User</span>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="container">
+    <header>
+      <h1>Upgrade your plan</h1>
+      <div class="subtitle">Choose the plan that's right for you</div>
+    </header>
+
+    <div class="plans">
+      <div class="plan-card current-plan">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">₹0</div>
+        <div class="plan-period">INR/month</div>
+        <p>Explore how AI can help you with everyday tasks</p>
+        <ul class="plan-features">
+          <li>Access to basic SQL generation</li>
+          <li>Standard query analysis</li>
+          <li>Limited access to advanced features</li>
+          <li>Basic database suggestions</li>
+        </ul>
+        <button class="btn current-btn">Your current plan</button>
+      </div>
+
+      <div class="plan-card">
+        <div class="popular-badge">POPULAR</div>
+        <div class="plan-name">Plus</div>
+        <div class="plan-price">₹20</div>
+        <div class="plan-period">INR/month</div>
+        <p>Level up productivity with expanded access</p>
+        <ul class="plan-features">
+          <li>Everything in Free</li>
+          <li>Advanced SQL generation</li>
+          <li>Complex query analysis</li>
+          <li>Database optimization</li>
+          <li>Schema design assistance</li>
+          <li>Priority support</li>
+        </ul>
+        <button class="btn" onclick="http://127.0.0.1:5000/payment'">Get Plus</button>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">₹200</div>
+        <div class="plan-period">INR/month</div>
+        <p>Get the best of SmartQueryBot with full access</p>
+        <ul class="plan-features">
+          <li>Everything in Plus</li>
+          <li>Unlimited advanced queries</li>
+          <li>Multi-database support</li>
+          <li>Query optimization engine</li>
+          <li>Schema migration tools</li>
+          <li>24/7 premium support</li>
+        </ul>
+        <button class="btn" onclick="window.location.href='payment.html?plan=pro'">Get Pro</button>
+      </div>
+    </div>
+
+    <div class="billing-help">
+      Have an existing plan? <a href="#">See billing help</a>
+    </div>
+  </div>
+
+  <script>
+    function logout() {
+      window.location.href = "http://localhost:5000/logout";
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      fetch('/get_username')
+        .then(response => response.json())
+        .then(data => {
+          if (data.username) {
+            document.getElementById('usernameDisplay').textContent = data.username;
+          } else {
+            window.location.href = 'http://localhost/hack/index.html';
+          }
+        });
+    });
+  </script>
+</body>
+</html>

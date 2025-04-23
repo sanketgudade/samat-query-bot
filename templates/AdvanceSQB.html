@@ -533,6 +533,28 @@
         // Initialize with generate mode active
         document.querySelector('[data-mode="generate"]').click();
     </script>
+    <script>document.addEventListener('DOMContentLoaded', function() {
+        // Display username
+        fetch('/get_username')
+            .then(response => response.json())
+            .then(data => {
+                if (data.username) {
+                    document.getElementById('usernameDisplay').textContent = data.username;
+                } else {
+                    window.location.href = 'http://localhost/hack/index.html';
+                }
+            });
     
+        // Check session periodically
+        setInterval(() => {
+            fetch('/check_session')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.logged_in) {
+                        window.location.href = 'http://localhost/hack/index.html';
+                    }
+                });
+        }, 300000); // Check every 5 minutes
+    });</script>
 </body>
 </html>

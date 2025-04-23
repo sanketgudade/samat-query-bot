@@ -953,9 +953,20 @@ function stopListening() {
         
 
         function smartQueryBot() {
-            window.open("http://localhost/hack/pricing.html", "_blank");
-        }
-
+            document.addEventListener('DOMContentLoaded', function() {
+              const advanceSmartQueryBotBtn = document.getElementById('advanceSmartQueryBotBtn');
+              if (advanceSmartQueryBotBtn) {
+                advanceSmartQueryBotBtn.addEventListener('click', function() {
+                  window.location.href = '/pricing';
+                });
+              }
+            });
+          }
+          
+          // You would then call this function when you want the button's functionality to be active,
+          // for example, after the DOM is loaded or when the button is dynamically added to the page.
+          // Example of calling it:
+          // smartQueryBot();
         function searchFunction() {
             alert("Search function activated...");
         }
@@ -1251,20 +1262,17 @@ function stopListening() {
 
         function smartQueryBot() {
             fetch('/check_session')
-                .then(response => {
-                    if (!response.ok) throw new Error('Session check failed');
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     if (data.logged_in) {
                         window.location.href = '/pricing';
                     } else {
-                        window.location.href = '/login';
+                        window.location.href = 'http://localhost/hack/index.html';
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    window.location.href = '/login';
+                    window.location.href = 'http://localhost/hack/index.html';
                 });
         }
         </script>

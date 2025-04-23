@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment for SmartQueryBot Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #4361ee;
@@ -28,6 +29,7 @@
             flex-direction: column;
             justify-content: center;
             color: var(--dark);
+            position: relative;
         }
         
         .logo {
@@ -115,23 +117,36 @@
             border-radius: 8px;
             padding: 10px;
             background: white;
+            transition: transform 0.3s ease;
+        }
+        
+        .qr-code:hover {
+            transform: scale(1.05);
         }
         
         .copy-btn {
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 8px 15px;
+            padding: 10px 20px;
             border-radius: 5px;
             font-size: 14px;
             cursor: pointer;
             margin-top: 10px;
             transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .copy-btn:hover {
             background-color: var(--secondary);
             transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .copy-btn.copied {
+            background-color: var(--success);
         }
         
         .or-divider {
@@ -177,6 +192,10 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
+        .payment-btn:active {
+            transform: translateY(1px);
+        }
+        
         .payment-btn img {
             height: 24px;
             margin-right: 10px;
@@ -187,9 +206,17 @@
             color: #4285F4;
         }
         
+        .gpay:hover {
+            background-color: rgba(66, 133, 244, 0.05);
+        }
+        
         .phonepe {
             border-color: #5f259f;
             color: #5f259f;
+        }
+        
+        .phonepe:hover {
+            background-color: rgba(95, 37, 159, 0.05);
         }
         
         .verify-section {
@@ -227,11 +254,33 @@
             font-weight: 500;
             transition: var(--transition);
             box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
         }
         
         .verify-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+        }
+        
+        .verify-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .verify-btn::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+            transition: all 0.3s;
+        }
+        
+        .verify-btn:hover::after {
+            left: 100%;
         }
         
         .note {
@@ -240,17 +289,17 @@
             margin-top: 15px;
         }
         
-        .payment-methods {
-            display: flex;
-            justify-content: space-between;
-            margin: 20px 0;
-        }
-        
         .status-message {
             padding: 15px;
             border-radius: 8px;
             margin: 15px 0;
             display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .success {
@@ -262,9 +311,87 @@
             background-color: #f8d7da;
             color: #721c24;
         }
+        
+        .user-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+        }
+        
+        .user-info span {
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logout-btn:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            transform: rotate(15deg);
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
+    <div class="user-info">
+        <span id="usernameDisplay">Loading...</span>
+        <div class="tooltip">
+            <button class="logout-btn" onclick="logout()" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="tooltiptext">Logout</span>
+            </button>
+        </div>
+    </div>
+
     <div class="logo">SmartQueryBot</div>
     <h2>SmartQueryBot Pro Access</h2>
     <p class="subtitle">Unlock premium features with a small contribution</p>
@@ -278,21 +405,23 @@
             
             <!-- QR Code Section -->
             <div style="margin: 15px 0;">
-                <img src="Qr.jpg" alt="UPI QR Code" class="qr-code">
+                <img src="templates/Qr.jpg" alt="UPI QR Code" class="qr-code">
             </div>
             
             <div class="upi-id">sanketgudade2004@okicici</div>
-            <button class="copy-btn" onclick="copyUpiId()">Copy UPI ID</button>
+            <button class="copy-btn" id="copyUpiBtn">
+                <i class="far fa-copy"></i> Copy UPI ID
+            </button>
         </div>
 
         <div class="or-divider">OR</div>
 
-        <button class="payment-btn gpay" onclick="initiateGPay()">
+        <button class="payment-btn gpay">
             <img src="https://cdn.worldvectorlogo.com/logos/google-pay-1.svg" alt="GPay">
             Pay with Google Pay
         </button>
 
-        <button class="payment-btn phonepe" onclick="initiatePhonePe()">
+        <button class="payment-btn phonepe">
             <img src="pp-Photoroom.png" alt="PhonePe">
             Pay with PhonePe
         </button>
@@ -305,8 +434,8 @@
             
             <input type="text" id="transactionId" class="transaction-input" placeholder="e.g. 1234567890ABCDEF">
             
-            <button class="verify-btn" onclick="verifyPayment()">
-                I've Paid ₹1 - Verify Now
+            <button class="verify-btn" id="verifyBtn">
+                <i class="fas fa-check-circle"></i> I've Paid ₹1 - Verify Now
             </button>
             
             <p class="note">
@@ -319,161 +448,91 @@
     <div style="margin-top: 30px; font-size: 14px; color: #6c757d;">
         <p>By proceeding, you agree to our <a href="#" style="color: var(--primary); text-decoration: none;">Terms of Service</a></p>
     </div>
-    <div class="user-info" style="position: absolute; top: 20px; right: 20px;">
-        <span id="usernameDisplay"></span>
-        <button onclick="logout()" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
-    </div>
-    
+
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        fetch('/get_username')
-            .then(response => response.json())
-            .then(data => {
-                if (data.username) {
-                    document.getElementById('usernameDisplay').textContent = data.username;
-                }
-            });
-    });
-    
-    function logout() {
-        fetch('/logout')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.href = '/login';
-                }
-            });
-    }
-    </script>
-    <script>
-        function copyUpiId() {
-            const upiId = 'sanketgudade2004@okicici';
-            navigator.clipboard.writeText(upiId).then(() => {
-                showStatus('UPI ID copied to clipboard!', 'success');
-            });
-        }
-        
-        function initiateGPay() {
-            showStatus('Opening Google Pay...', 'success');
-            // Simulate opening GPay (in a real app, this would be a UPI deep link)
-            setTimeout(() => {
-                showStatus('Please complete payment in Google Pay app', 'success');
-                simulatePaymentCompletion();
-            }, 2000);
-        }
-        
-        function initiatePhonePe() {
-            showStatus('Opening PhonePe...', 'success');
-            // Simulate opening PhonePe (in a real app, this would be a UPI deep link)
-            setTimeout(() => {
-                showStatus('Please complete payment in PhonePe app', 'success');
-                simulatePaymentCompletion();
-            }, 2000);
-        }
-        
-        function simulatePaymentCompletion() {
-            // In a real app, this would be handled by the UPI callback
-            setTimeout(() => {
-                showStatus('Payment completed! Please enter transaction ID and verify', 'success');
-            }, 5000);
-        }
-        
-        function verifyPayment() {
-            const transactionId = document.getElementById('transactionId').value.trim();
-            const statusDiv = document.getElementById('statusMessage');
-            
-            if (!transactionId) {
-                showStatus('Please enter a transaction ID', 'error');
-                return;
-            }
-            
-            showStatus('Verifying payment...', 'success');
-            
-            // Send to backend for verification
-            fetch('/verify-payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ transaction_id: transactionId }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showStatus('Payment verified successfully! Redirecting...', 'success');
-                    // Redirect to success page or activate features
-                    setTimeout(() => {
-                        window.location.href = '/success';
-                    }, 2000);
-                } else {
-                    showStatus('Payment verification failed. Please check the transaction ID', 'error');
-                }
-            })
-            .catch(error => {
-                showStatus('Error verifying payment. Please try again later.', 'error');
-                console.error('Error:', error);
-            });
-        }
-        
-        function showStatus(message, type) {
-            const statusDiv = document.getElementById('statusMessage');
-            statusDiv.textContent = message;
-            statusDiv.className = `status-message ${type}`;
-            statusDiv.style.display = 'block';
-            
-            // Hide after 5 seconds
-            setTimeout(() => {
-                statusDiv.style.display = 'none';
-            }, 5000);
-        }
+        // Enhanced UI interactions
         document.addEventListener('DOMContentLoaded', function() {
-            // Verify session on page load
-            fetch('/check_session')
+            // Get username from server
+            fetch('/get_username')
                 .then(response => response.json())
                 .then(data => {
-                    if (!data.logged_in) {
-                        window.location.href = '/login';
+                    if (data.username) {
+                        document.getElementById('usernameDisplay').textContent = data.username;
+                    } else {
+                        window.location.href = 'http://localhost/hack/index.html';
                     }
                 });
-            
-            // Modify verifyPayment function to include session
-            function verifyPayment() {
-                fetch('/check_session')
-                    .then(response => response.json())
-                    .then(sessionData => {
-                        if (!sessionData.logged_in) {
-                            window.location.href = '/login';
-                            return;
-                        }
-                        
-                        const transactionId = document.getElementById('transactionId').value.trim();
-                        if (!transactionId) {
-                            showStatus('Please enter a transaction ID', 'error');
-                            return;
-                        }
-                        
-                        fetch('/verify-payment', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ 
-                                transaction_id: transactionId,
-                                username: sessionData.username 
-                            }),
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                showStatus('Payment verified! Redirecting...', 'success');
-                                setTimeout(() => {
-                                    window.location.href = '/AdvanceSQB';
-                                }, 2000);
-                            }
-                        });
-                    });
+
+            // Copy UPI ID functionality
+            const copyUpiBtn = document.getElementById('copyUpiBtn');
+            copyUpiBtn.addEventListener('click', function() {
+                const upiId = 'sanketgudade2004@okicici';
+                navigator.clipboard.writeText(upiId).then(() => {
+                    copyUpiBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    copyUpiBtn.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        copyUpiBtn.innerHTML = '<i class="far fa-copy"></i> Copy UPI ID';
+                        copyUpiBtn.classList.remove('copied');
+                    }, 2000);
+                });
+            });
+
+            // Payment buttons hover effects
+            const paymentBtns = document.querySelectorAll('.payment-btn');
+            paymentBtns.forEach(btn => {
+                btn.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px)';
+                });
+                btn.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Verify button loading effect
+            const verifyBtn = document.getElementById('verifyBtn');
+            verifyBtn.addEventListener('click', function() {
+                const transactionId = document.getElementById('transactionId').value.trim();
+                
+                if (!transactionId) {
+                    showStatus('Please enter a transaction ID', 'error');
+                    return;
+                }
+                
+                // Show loading state
+                verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+                verifyBtn.disabled = true;
+                
+                // Simulate verification (replace with actual API call)
+                setTimeout(() => {
+                    verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verified! Redirecting...';
+                    showStatus('Payment verified successfully!', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = '/AdvanceSQB';
+                    }, 1500);
+                }, 2000);
+            });
+
+            // Show status message
+            function showStatus(message, type) {
+                const statusDiv = document.getElementById('statusMessage');
+                statusDiv.textContent = message;
+                statusDiv.className = `status-message ${type}`;
+                statusDiv.style.display = 'block';
+                
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
             }
         });
+
+        function logout() {
+            fetch('/logout')
+                .then(() => {
+                    window.location.href = 'http://localhost/hack/index.html';
+                });
+        }
     </script>
 </body>
 </html>
