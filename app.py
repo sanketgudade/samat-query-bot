@@ -22,9 +22,28 @@ CORS(app, resources={
     r"/check_session": {"origins": "*"},
     r"/pricing": {"origins": "*"},
     r"/payment": {"origins": "*"},
+    r"/submit_payment": {"origins": "*"},  # Add this line
+    r"/check_access": {"origins": "*"},    # Add this line
     r"/verify-payment": {"origins": "*"},
     r"/AdvanceSQB": {"origins": "*"}
 })
+CORS(app, resources={
+    r"/get_username": {
+        "origins": ["http://localhost", "http://127.0.0.1"],
+        "supports_credentials": True,
+        "methods": ["GET"]
+    },
+    r"/check_access/*": {
+        "origins": ["http://localhost", "http://127.0.0.1"],
+        "supports_credentials": True,
+        "methods": ["GET"]
+    },
+    r"/logout": {
+        "origins": ["http://localhost", "http://127.0.0.1"],
+        "supports_credentials": True,
+        "methods": ["GET"]
+    }
+}, supports_credentials=True)
 
 # Database configuration
 db_config = {
@@ -58,7 +77,7 @@ def pricing():
 def payment():
     if 'user_name' not in session:
         return redirect('http://localhost/hack/index.html')
-    return render_template('payment.html')
+    return render_template('payment_pro.html')
 
 @app.route('/AdvanceSQB')
 def advance_sqb():
@@ -296,6 +315,115 @@ def chat():
 def logout():
     session.clear()
     return redirect("http://localhost/hack/index.html")
+
+@app.route('/check_access')
+def check_access():
+    if 'user_name' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # Check if user has any payment records
+            sql = """SELECT * FROM payments 
+                     WHERE username = %s 
+                     ORDER BY payment_date DESC 
+                     LIMIT 1"""
+            cursor.execute(sql, (session['user_name'],))
+            payment = cursor.fetchone()
+
+            if payment:
+                # Check if payment is verified and not expired
+                is_active = (payment['status'] == 'verified' and 
+                            datetime.now() < payment['access_expires_at'])
+                return jsonify({
+                    'hasAccess': is_active,
+                    'pending': payment['status'] == 'pending',
+                    'expiresAt': payment['access_expires_at'].strftime('%Y-%m-%d %H:%M:%S') if payment['access_expires_at'] else None
+                })
+            return jsonify({'hasAccess': False, 'pending': False})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection:
+            connection.close()
+
+@app.route('/submit_payment', methods=['POST'])
+def submit_payment():
+    if 'user_name' not in session:
+        return jsonify({'success': False, 'message': 'User not logged in'}), 401
+
+    try:
+        # Get form data
+        transaction_id = request.form.get('transaction_id')
+        amount = request.form.get('amount', '1.00')
+        upi_method = request.form.get('upi_method', 'Any UPI App')
+        
+        # Handle file upload
+        if 'receipt' not in request.files:
+            return jsonify({'success': False, 'message': 'No receipt file uploaded'}), 400
+            
+        file = request.files['receipt']
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'No selected file'}), 400
+
+        # Validate file size (5MB max)
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)
+        if file_size > 5 * 1024 * 1024:  # 5MB
+            return jsonify({'success': False, 'message': 'File too large (max 5MB)'}), 400
+
+        # Create receipts directory if it doesn't exist
+        upload_dir = os.path.join(app.root_path, 'receipts')
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+
+        # Generate unique filename
+        file_ext = os.path.splitext(file.filename)[1]
+        receipt_filename = f"{session['user_name']}_{datetime.now().strftime('%Y%m%d%H%M%S')}{file_ext}"
+        upload_path = os.path.join(upload_dir, receipt_filename)
+
+        # Save the file
+        file.save(upload_path)
+
+        # Calculate expiration date (1 month from now)
+        payment_date = datetime.now()
+        access_expires_at = payment_date + timedelta(days=30)
+
+        # Insert into database
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            sql = """INSERT INTO payments (
+                username, transaction_id, amount, upi_method, 
+                receipt_filename, status, payment_date, 
+                access_expires_at, plan
+            ) VALUES (%s, %s, %s, %s, %s, 'pending', %s, %s, 'basic')"""
+            
+            cursor.execute(sql, (
+                session['user_name'],
+                transaction_id,
+                amount,
+                upi_method,
+                receipt_filename,
+                payment_date,
+                access_expires_at
+            ))
+        connection.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Payment submitted for verification'
+        })
+
+    except Exception as e:
+        # Delete the file if there was an error
+        if 'upload_path' in locals() and os.path.exists(upload_path):
+            os.remove(upload_path)
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        if 'connection' in locals():
+            connection.close()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

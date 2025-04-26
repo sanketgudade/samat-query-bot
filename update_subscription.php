@@ -1,34 +1,41 @@
 <?php
 session_start();
-header('Content-Type: application/json');
-
-// Check admin authentication
 if (!isset($_SESSION['admin_logged_in'])) {
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    header("HTTP/1.1 403 Forbidden");
     exit;
 }
 
-// Database connection
 $db = new mysqli('localhost', 'username', 'password', 'hackathon');
 if ($db->connect_error) {
-    echo json_encode(['success' => false, 'error' => 'Database connection failed']);
-    exit;
+    die(json_encode(['success' => false, 'error' => 'Database connection failed']));
 }
 
-// Get input data
-$id = intval($_POST['id']);
-$status = in_array($_POST['status'], ['approved', 'rejected']) ? $_POST['status'] : 'pending';
+$id = $db->real_escape_string($_POST['id']);
+$status = $db->real_escape_string($_POST['status']);
+$admin_id = $_SESSION['admin_id'];
+$reason = isset($_POST['reason']) ? $db->real_escape_string($_POST['reason']) : null;
 
-// Update subscription status
-$stmt = $db->prepare("UPDATE subscriptions SET status = ? WHERE id = ?");
-$stmt->bind_param("si", $status, $id);
+if ($status === 'approved') {
+    $query = "UPDATE subscriptions SET 
+              status = '$status', 
+              verified_by = $admin_id, 
+              verified_at = NOW(),
+              expires_at = DATE_ADD(NOW(), INTERVAL 1 MONTH)
+              WHERE id = $id";
+} else {
+    $query = "UPDATE subscriptions SET 
+              status = '$status', 
+              verified_by = $admin_id, 
+              verified_at = NOW(),
+              rejection_reason = " . ($reason ? "'$reason'" : "NULL") . "
+              WHERE id = $id";
+}
 
-if ($stmt->execute()) {
+if ($db->query($query)) {
     echo json_encode(['success' => true]);
 } else {
     echo json_encode(['success' => false, 'error' => $db->error]);
 }
 
-$stmt->close();
 $db->close();
 ?>

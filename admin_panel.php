@@ -1,5 +1,4 @@
 <?php
-// Start session and check admin authentication
 session_start();
 if (!isset($_SESSION['admin_logged_in'])) {
     header("Location: admin_login.php");
@@ -7,27 +6,30 @@ if (!isset($_SESSION['admin_logged_in'])) {
 }
 
 // Database connection
-$db = new mysqli('localhost', 'username', 'password', 'hackathon');
+$db = new mysqli('localhost', 'root', 'rajkumar@123', 'hackathon');
 if ($db->connect_error) {
     die("Database connection failed: " . $db->connect_error);
 }
 
-// Fetch data from all tables
+// Fetch all data
+$payments = $db->query("SELECT * FROM payments ORDER BY created_at DESC");
 $users = $db->query("SELECT * FROM users ORDER BY created_at DESC LIMIT 10");
 $contacts = $db->query("SELECT * FROM contact_submissions ORDER BY submission_date DESC LIMIT 10");
-$subscriptions = $db->query("SELECT * FROM subscriptions ORDER BY joined_at DESC LIMIT 10");
 
 // Count totals for stats
+$total_payments = $db->query("SELECT COUNT(*) as count FROM payments")->fetch_assoc()['count'];
+$pending_payments = $db->query("SELECT COUNT(*) as count FROM payments WHERE status='pending'")->fetch_assoc()['count'];
+$verified_payments = $db->query("SELECT COUNT(*) as count FROM payments WHERE status='verified'")->fetch_assoc()['count'];
+$rejected_payments = $db->query("SELECT COUNT(*) as count FROM payments WHERE status='rejected'")->fetch_assoc()['count'];
 $total_users = $db->query("SELECT COUNT(*) as count FROM users")->fetch_assoc()['count'];
 $total_contacts = $db->query("SELECT COUNT(*) as count FROM contact_submissions")->fetch_assoc()['count'];
-$pending_payments = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE status='pending'")->fetch_assoc()['count'];
-$total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE status='approved'")->fetch_assoc()['count'] * 1; // ₹1 per subscription
-?>
+$total_revenue = $db->query("SELECT SUM(amount) as total FROM payments WHERE status='verified'")->fetch_assoc()['total'] ?? 0;
+?>    
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel | Smart QueryBot</title>
+    <title>Admin Panel | Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -311,7 +313,7 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
             color: #856404;
         }
         
-        .status-approved {
+        .status-verified {
             background-color: #d4edda;
             color: #155724;
         }
@@ -337,6 +339,11 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
             margin-right: 5px;
         }
         
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
         .btn-success {
             background-color: var(--success-color);
             color: white;
@@ -345,6 +352,41 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
         .btn-danger {
             background-color: var(--error-color);
             color: white;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: var(--dark-color);
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            animation: fadeIn 0.3s;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         /* Responsive Styles */
@@ -402,16 +444,16 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
                     </a>
                 </li>
                 <li>
-                    <a href="#subscriptions-section">
+                    <a href="#payments-section">
                         <i class="fas fa-credit-card"></i>
-                        <span>Subscriptions</span>
+                        <span>Payments</span>
                         <span class="badge"><?= $pending_payments ?></span>
                     </a>
                 </li>
                 <li>
                     <a href="#contacts-section">
                         <i class="fas fa-envelope"></i>
-                        <span>Contact Messages</span>
+                        <span>Contacts</span>
                         <span class="badge"><?= $total_contacts ?></span>
                     </a>
                 </li>
@@ -432,7 +474,7 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
             <div class="user-menu">
                 <div class="user-profile">
                     <img src="admin.png" alt="Admin">
-                    <div class="name">Admin User</div>
+                    <div class="name">Admin</div>
                 </div>
             </div>
         </div>
@@ -482,7 +524,7 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
                             <i class="fas fa-rupee-sign"></i>
                         </div>
                     </div>
-                    <div class="card-value">₹<?= $total_revenue ?></div>
+                    <div class="card-value">₹<?= number_format($total_revenue, 2) ?></div>
                 </div>
             </div>
             
@@ -490,6 +532,9 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
             <div class="data-table" id="users-section">
                 <div class="table-header">
                     <div class="table-title">Recent Users</div>
+                    <a href="export.php?type=users" class="btn btn-primary">
+                        <i class="fas fa-download"></i> Export
+                    </a>
                 </div>
                 
                 <table id="usersTable">
@@ -498,7 +543,9 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
                             <th>ID</th>
                             <th>Name</th>
                             <th>Email</th>
+                            <th>Phone</th>
                             <th>Joined At</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -507,64 +554,95 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
                             <td><?= $user['id'] ?></td>
                             <td><?= htmlspecialchars($user['name']) ?></td>
                             <td><?= htmlspecialchars($user['email']) ?></td>
+                            <td><?= htmlspecialchars($user['phone'] ?? 'N/A') ?></td>
                             <td><?= date('M d, Y h:i A', strtotime($user['created_at'])) ?></td>
+                            <td>
+                                <button class="btn btn-danger btn-delete-user" data-id="<?= $user['id'] ?>">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </td>
                         </tr>
                         <?php endwhile; ?>
                     </tbody>
                 </table>
             </div>
             
-            <!-- Subscriptions Table -->
-            <div class="data-table" id="subscriptions-section">
-                <div class="table-header">
-                    <div class="table-title">Recent Subscriptions</div>
-                </div>
-                
-                <table id="subscriptionsTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Username</th>
-                            <th>Transaction ID</th>
-                            <th>Status</th>
-                            <th>Joined At</th>
-                            <th>Expires At</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while($sub = $subscriptions->fetch_assoc()): ?>
-                        <tr>
-                            <td><?= $sub['id'] ?></td>
-                            <td><?= htmlspecialchars($sub['username']) ?></td>
-                            <td><?= htmlspecialchars($sub['transaction_id']) ?></td>
-                            <td>
-                                <span class="status status-<?= $sub['status'] ?>">
-                                    <?= ucfirst($sub['status']) ?>
-                                </span>
-                            </td>
-                            <td><?= date('M d, Y', strtotime($sub['joined_at'])) ?></td>
-                            <td><?= date('M d, Y', strtotime($sub['expires_at'])) ?></td>
-                            <td>
-                                <?php if($sub['status'] == 'pending'): ?>
-                                    <button class="btn btn-success btn-approve" data-id="<?= $sub['id'] ?>">
-                                        <i class="fas fa-check"></i> Approve
-                                    </button>
-                                    <button class="btn btn-danger btn-reject" data-id="<?= $sub['id'] ?>">
-                                        <i class="fas fa-times"></i> Reject
-                                    </button>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
-            </div>
+            <!-- Payments Table -->
+           <!-- Payments Table -->
+<div class="data-table" id="payments-section">
+    <div class="table-header">
+        <div class="table-title">Payment Submissions</div>
+        <a href="export.php?type=payments" class="btn btn-primary">
+            <i class="fas fa-download"></i> Export
+        </a>
+    </div>
+    
+    <table id="paymentsTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Transaction ID</th>
+                <th>Amount</th>
+                <th>Receipt</th>
+                <th>Status</th>
+                <th>Submitted At</th>
+                <th>Expires At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while($payment = $payments->fetch_assoc()): ?>
+            <tr>
+                <td><?= $payment['id'] ?></td>
+                <td><?= htmlspecialchars($payment['username']) ?></td>
+                <td><?= htmlspecialchars($payment['transaction_id']) ?></td>
+                <td>₹<?= number_format($payment['amount'], 2) ?></td>
+                <td>
+                    <?php if(!empty($payment['receipt_filename'])): ?>
+                        <a href="receipts/<?= htmlspecialchars($payment['receipt_filename']) ?>" target="_blank" class="btn btn-primary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    <?php else: ?>
+                        <span class="text-muted">No receipt</span>
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <span class="status status-<?= $payment['status'] ?>">
+                        <?= ucfirst($payment['status']) ?>
+                    </span>
+                </td>
+                <td><?= date('M d, Y H:i', strtotime($payment['created_at'])) ?></td>
+                <td>
+                    <?= !empty($payment['access_expires_at']) ? date('M d, Y H:i', strtotime($payment['access_expires_at'])) : '-' ?>
+                </td>
+                <td>
+                    <?php if($payment['status'] == 'pending'): ?>
+                        <button class="btn btn-success btn-approve" data-id="<?= $payment['id'] ?>">
+                            <i class="fas fa-check"></i> Verify
+                        </button>
+                        <button class="btn btn-danger btn-reject" data-id="<?= $payment['id'] ?>">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                    <?php elseif($payment['status'] == 'verified'): ?>
+                        <button class="btn btn-warning btn-revoke" data-id="<?= $payment['id'] ?>">
+                            <i class="fas fa-undo"></i> Revoke
+                        </button>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php endwhile; ?>
+        </tbody>
+    </table>
+</div>
             
             <!-- Contact Messages Table -->
             <div class="data-table" id="contacts-section">
                 <div class="table-header">
                     <div class="table-title">Recent Contact Messages</div>
+                    <a href="export.php?type=contacts" class="btn btn-primary">
+                        <i class="fas fa-download"></i> Export
+                    </a>
                 </div>
                 
                 <table id="contactsTable">
@@ -575,6 +653,7 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
                             <th>Email</th>
                             <th>Message</th>
                             <th>Date</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -585,11 +664,25 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
                             <td><?= htmlspecialchars($contact['email']) ?></td>
                             <td><?= htmlspecialchars(substr($contact['message'], 0, 50)) . (strlen($contact['message']) > 50 ? '...' : '') ?></td>
                             <td><?= date('M d, Y h:i A', strtotime($contact['submission_date'])) ?></td>
+                            <td>
+                                <button class="btn btn-danger btn-delete-contact" data-id="<?= $contact['id'] ?>">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </td>
                         </tr>
                         <?php endwhile; ?>
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+    
+    <!-- Message View Modal -->
+    <div id="messageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
+        <div style="background-color: white; padding: 20px; border-radius: 8px; max-width: 600px; width: 90%;">
+            <h3 style="margin-bottom: 15px;">Message Details</h3>
+            <p id="messageContent" style="margin-bottom: 20px;"></p>
+            <button id="closeModal" style="padding: 8px 15px; background-color: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
         </div>
     </div>
     
@@ -606,9 +699,9 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
                 "lengthChange": false
             });
             
-            $('#subscriptionsTable').DataTable({
+            $('#paymentsTable').DataTable({
                 responsive: true,
-                "pageLength": 5,
+                "pageLength": 10,
                 "lengthChange": false
             });
             
@@ -618,36 +711,220 @@ $total_revenue = $db->query("SELECT COUNT(*) as count FROM subscriptions WHERE s
                 "lengthChange": false
             });
             
-            // Handle subscription approval/rejection
-            $('.btn-approve').click(function() {
-                const id = $(this).data('id');
-                updateSubscriptionStatus(id, 'approved');
-            });
+          // Handle payment approval
+// Handle payment approval
+// Handle payment approval
+// Enhanced payment approval handler
+// Handle payment approval
+$('.btn-approve').click(function() {
+    const paymentId = $(this).data('id');
+    const row = $(this).closest('tr');
+    
+    if (confirm('Approve this payment and grant access?')) {
+        const button = $(this);
+        button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing');
+        
+        $.ajax({
+            url: 'update_payment_status.php',
+            method: 'POST',
+            data: {
+                payment_id: paymentId,
+                status: 'verified',
+                admin_notes: 'Approved by admin'
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    // Update the row immediately
+                    row.find('.status')
+                        .removeClass('status-pending')
+                        .addClass('status-verified')
+                        .text('Verified');
+                    
+                    // Update expiration date
+                    const expiresAt = new Date();
+                    expiresAt.setMonth(expiresAt.getMonth() + 1);
+                    row.find('td:nth-child(8)').text(expiresAt.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }));
+                    
+                    // Update actions
+                    row.find('td:last').html(`
+                        <button class="btn btn-warning btn-revoke" data-id="${paymentId}">
+                            <i class="fas fa-undo"></i> Revoke
+                        </button>
+                    `);
+                    
+                    showAlert('Payment approved successfully!', 'success');
+                    
+                    // Update stats counters
+                    updateStatsCounters();
+                } else {
+                    showAlert('Error: ' + (response.message || 'Failed to approve payment'), 'error');
+                    button.prop('disabled', false).html('<i class="fas fa-check"></i> Verify');
+                }
+            },
+            error: function(xhr, status, error) {
+                showAlert('Error: ' + error, 'error');
+                console.error('AJAX Error:', status, error, xhr.responseText);
+                button.prop('disabled', false).html('<i class="fas fa-check"></i> Verify');
+            }
+        });
+    }
+});
+
+// Handle payment rejection
+$('.btn-reject').click(function() {
+    const paymentId = $(this).data('id');
+    const row = $(this).closest('tr');
+    const reason = prompt('Enter rejection reason:');
+    
+    if (reason !== null && reason.trim() !== '') {
+        const button = $(this);
+        button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing');
+        
+        $.ajax({
+            url: 'update_payment_status.php',
+            method: 'POST',
+            data: {
+                payment_id: paymentId,
+                status: 'rejected',
+                admin_notes: reason
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    // Update the row immediately
+                    row.find('.status')
+                        .removeClass('status-pending')
+                        .addClass('status-rejected')
+                        .text('Rejected');
+                    
+                    // Clear expiration date
+                    row.find('td:nth-child(8)').text('-');
+                    
+                    // Remove action buttons
+                    row.find('td:last').html('');
+                    
+                    showAlert('Payment rejected successfully!', 'warning');
+                    
+                    // Update stats counters
+                    updateStatsCounters();
+                } else {
+                    showAlert('Error: ' + (response.message || 'Failed to reject payment'), 'error');
+                    button.prop('disabled', false).html('<i class="fas fa-times"></i> Reject');
+                }
+            },
+            error: function(xhr, status, error) {
+                showAlert('Error: ' + error, 'error');
+                console.error('AJAX Error:', status, error, xhr.responseText);
+                button.prop('disabled', false).html('<i class="fas fa-times"></i> Reject');
+            }
+        });
+    } else if (reason !== null) {
+        alert('Please provide a rejection reason');
+    }
+});
+
+// Function to update stats counters
+function updateStatsCounters() {
+    $.get('get_stats.php', function(data) {
+        $('.stats-card:nth-child(1) .card-value').text(data.total_users);
+        $('.stats-card:nth-child(2) .card-value').text(data.total_contacts);
+        $('.stats-card:nth-child(3) .card-value').text(data.pending_payments);
+        $('.stats-card:nth-child(4) .card-value').text('₹' + data.total_revenue);
+    }, 'json');
+}// Handle payment revocation
+$('.btn-revoke').click(function() {
+    const paymentId = $(this).data('id');
+    if (confirm('Revoke this payment and remove user access?')) {
+        const button = $(this);
+        button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing');
+        
+        $.ajax({
+            url: 'update_payment_status.php',
+            method: 'POST',
+            data: {
+                payment_id: paymentId,
+                status: 'rejected',
+                admin_notes: 'Access revoked by admin'
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    showAlert('Payment revoked successfully!', 'warning');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('Error: ' + (response.message || 'Unknown error'), 'error');
+                    button.prop('disabled', false).html('<i class="fas fa-undo"></i> Revoke');
+                }
+            },
+            error: function(xhr, status, error) {
+                showAlert('Error: ' + error, 'error');
+                console.error('AJAX Error:', status, error);
+                button.prop('disabled', false).html('<i class="fas fa-undo"></i> Revoke');
+            }
+        });
+    }
+});
             
-            $('.btn-reject').click(function() {
-                const id = $(this).data('id');
-                updateSubscriptionStatus(id, 'rejected');
-            });
-            
-            function updateSubscriptionStatus(id, status) {
-                if (!confirm(`Are you sure you want to ${status} this subscription?`)) return;
-                
-                $.ajax({
-                    url: 'update_subscription.php',
-                    method: 'POST',
-                    data: { id, status },
-                    success: function(response) {
-                        if (response.success) {
-                            alert('Subscription status updated successfully');
-                            location.reload();
-                        } else {
-                            alert('Error updating status: ' + response.error);
+            // Handle user deletion
+            $('.btn-delete-user').click(function() {
+                const userId = $(this).data('id');
+                if (confirm('Are you sure you want to delete this user and all their data?')) {
+                    $.ajax({
+                        url: 'delete_user.php',
+                        method: 'POST',
+                        data: { user_id: userId },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                showAlert('User deleted successfully', 'success');
+                                setTimeout(() => location.reload(), 1500);
+                            } else {
+                                showAlert('Error: ' + (response.message || 'Unknown error'), 'error');
+                            }
+                        },
+                        error: function() {
+                            showAlert('Network error - please try again', 'error');
                         }
-                    },
-                    error: function() {
-                        alert('Error communicating with server');
-                    }
-                });
+                    });
+                }
+            });
+            
+            // Handle contact message deletion
+            $('.btn-delete-contact').click(function() {
+                const contactId = $(this).data('id');
+                if (confirm('Are you sure you want to delete this contact message?')) {
+                    $.ajax({
+                        url: 'delete_contact.php',
+                        method: 'POST',
+                        data: { contact_id: contactId },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                showAlert('Contact message deleted successfully', 'success');
+                                setTimeout(() => location.reload(), 1500);
+                            } else {
+                                showAlert('Error: ' + (response.message || 'Unknown error'), 'error');
+                            }
+                        },
+                        error: function() {
+                            showAlert('Network error - please try again', 'error');
+                        }
+                    });
+                }
+            });
+            
+            // Show alert message
+            function showAlert(message, type) {
+                const alert = $(`<div class="alert alert-${type}">${message}</div>`);
+                $('.content-wrapper').prepend(alert);
+                setTimeout(() => alert.fadeOut(), 3000);
             }
         });
     </script>

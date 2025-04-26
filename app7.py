@@ -1,105 +1,119 @@
 from flask import Flask, request, jsonify, send_from_directory
 import os
 from werkzeug.utils import secure_filename
+import pymysql
 from datetime import datetime, timedelta
-import sqlite3
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'receipts'
-app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'pdf'}
 
-# Database setup
-def get_db():
-    conn = sqlite3.connect('subscriptions.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+# Configuration
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'pdf'}
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB limit
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-def init_db():
-    with get_db() as conn:
-        conn.execute('''
-        CREATE TABLE IF NOT EXISTS subscriptions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            transaction_id TEXT NOT NULL,
-            receipt_path TEXT NOT NULL,
-            joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            expires_at DATETIME,
-            status TEXT DEFAULT 'pending',
-            amount REAL NOT NULL,
-            plan TEXT NOT NULL
-        )
-        ''')
-        conn.commit()
+# Database configuration
+db_config = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'rajkumar@123',
+    'database': 'hackathon',
+    'cursorclass': pymysql.cursors.DictCursor
+}
 
-# Routes
-@app.route('/')
-def index():
-    return send_from_directory('static', 'payment.html')
+def get_db_connection():
+    return pymysql.connect(**db_config)
 
-@app.route('/get_username')
-def get_username():
-    # In a real app, you'd get this from the session
-    return jsonify({'username': 'current_user'})
-
-@app.route('/submit_payment', methods=['POST'])
-def submit_payment():
-    if 'receipt' not in request.files:
-        return jsonify({'success': False, 'message': 'No receipt file'})
-    
-    receipt = request.files['receipt']
-    transaction_id = request.form.get('transaction_id')
-    username = request.form.get('username')
-    plan = request.form.get('plan')
-    
-    if not all([receipt, transaction_id, username, plan]):
-        return jsonify({'success': False, 'message': 'Missing required fields'})
-    
-    if receipt.filename == '':
-        return jsonify({'success': False, 'message': 'No selected file'})
-    
-    if receipt and allowed_file(receipt.filename):
-        filename = secure_filename(f"{username}_{transaction_id}_{receipt.filename}")
-        receipt_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        receipt.save(receipt_path)
-        
-        # Set amount based on plan
-        amount = 0
-        if plan == 'plus':
-            amount = 1
-        elif plan == 'pro':
-            amount = 200
-        
-        # Calculate expiration date (1 month from now)
-        expires_at = datetime.now() + timedelta(days=30)
-        
-        # Store in database
-        with get_db() as conn:
-            conn.execute('''
-            INSERT INTO subscriptions (username, transaction_id, receipt_path, expires_at, amount, plan)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ''', (username, transaction_id, receipt_path, expires_at, amount, plan))
-            conn.commit()
-        
-        return jsonify({'success': True, 'message': 'Payment submitted for verification'})
-    
-    return jsonify({'success': False, 'message': 'Invalid file type'})
-
-@app.route('/logout')
-def logout():
-    # In a real app, you'd clear the session here
-    return jsonify({'success': True})
-
-@app.route('/thank_you')
-def thank_you():
-    return "Thank you for your payment! Admin will verify it shortly."
-
-# Helper functions
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-if __name__ == '__main__':
-    init_db()
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        os.makedirs(app.config['UPLOAD_FOLDER'])
-    app.run(debug=True, port=7000)  # Changed port to 7000
+@app.route('/submit_payment', methods=['POST'])
+def submit_payment():
+    if 'receipt' not in request.files:
+        return jsonify({'success': False, 'message': 'No file uploaded'})
+    
+    file = request.files['receipt']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'No selected file'})
+    
+    transaction_id = request.form.get('transaction_id')
+    username = request.form.get('username')
+    email = request.form.get('email')
+    
+    if not all([transaction_id, username, email]):
+        return jsonify({'success': False, 'message': 'Missing required fields'})
+    
+    if not allowed_file(file.filename):
+        return jsonify({'success': False, 'message': 'Allowed file types: jpg, jpeg, png, pdf'})
+    
+    # Secure filename and save
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+    
+    # Save to database
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            INSERT INTO payments 
+            (username, email, transaction_id, amount, upi_method, receipt_filename, status)
+            VALUES (%s, %s, %s, %s, %s, %s, 'pending')
+        """, (
+            username, 
+            email, 
+            transaction_id, 
+            1.00,  # Fixed amount of ₹1
+            request.form.get('upi_method', 'Any UPI App'),
+            filename
+        ))
+        conn.commit()
+        return jsonify({
+            'success': True,
+            'message': 'Payment submitted successfully! Admin will verify shortly.'
+        })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        conn.close()
+
+@app.route('/check_access/<username>')
+def check_access(username):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            SELECT status, access_expires_at 
+            FROM payments 
+            WHERE username = %s AND status = 'verified'
+            ORDER BY created_at DESC LIMIT 1
+        """, (username,))
+        
+        result = cursor.fetchone()
+        if result:
+            expires_at = result['access_expires_at']
+            remaining_days = (expires_at - datetime.now()).days if expires_at else 0
+            return jsonify({
+                'has_access': True,
+                'expires_at': expires_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'remaining_days': remaining_days
+            })
+        return jsonify({
+            'has_access': False,
+            'message': 'No active subscription found'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)})
+    finally:
+        conn.close()
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+if __name__== '__main__':
+    app.run(host='0.0.0.0', port=5007,debug=True)

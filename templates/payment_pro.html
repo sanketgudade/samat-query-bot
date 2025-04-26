@@ -395,84 +395,59 @@
             color: #721c24;
         }
         
-        .user-info {
+        .user-box {
             position: fixed;
             top: 20px;
             right: 20px;
             background: rgba(255, 255, 255, 0.9);
-            padding: 8px 15px;
-            border-radius: 50px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
             gap: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(5px);
             z-index: 100;
         }
-        
-        .user-info span {
-            font-weight: 500;
-            color: var(--dark);
+
+        #usernameDisplay {
+            font-weight: bold;
+            color: #333;
         }
-        
+
         .logout-btn {
-            background: none;
+            background-color: #e74c3c;
+            color: white;
             border: none;
-            color: #6c757d;
-            cursor: pointer;
-            transition: var(--transition);
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .logout-btn:hover {
-            background-color: rgba(220, 53, 69, 0.1);
-            color: #dc3545;
-            transform: rotate(15deg);
-        }
-        
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 120px;
-            background-color: #555;
-            color: #fff;
-            text-align: center;
+            padding: 8px 12px;
             border-radius: 6px;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -60px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: var(--transition);
+        }
+
+        .logout-btn:hover {
+            background-color: #c0392b;
         }
         
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
+        .access-info {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #e9f7ef;
+            color: #155724;
+            display: none;
+        }
+        
+        .no-access {
+            background-color: #f8d7da;
+            color: #721c24;
         }
     </style>
 </head>
 <body>
-    <div class="user-info">
+    <div class="user-box">
         <span id="usernameDisplay">Loading...</span>
-        <div class="tooltip">
-            <button class="logout-btn" onclick="logout()" title="Logout">
-                <i class="fas fa-sign-out-alt"></i>
-                <span class="tooltiptext">Logout</span>
-            </button>
-        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 
     <div class="logo">SmartQueryBot</div>
@@ -488,9 +463,8 @@
             
             <!-- QR Code Section -->
             <div style="margin: 15px 0;">
-                <img src="{{ url_for('static', filename='Qr.jpg') }}" alt="UPI QR Code" class="qr-code" width="200">
+                <img src="static/Qr.jpg" alt="UPI QR Code" class="qr-code" width="200">
             </div>
-            
             
             <div class="upi-id">sanketgudade2004@okicici</div>
             <button class="copy-btn" id="copyUpiBtn">
@@ -526,6 +500,7 @@
         </button>
 
         <div id="statusMessage" class="status-message"></div>
+        <div id="accessInfo" class="access-info"></div>
 
         <div class="verify-section">
             <h4 style="margin-bottom: 5px;">Payment Verification</h4>
@@ -560,18 +535,15 @@
     </div>
 
     <script>
-        // Enhanced UI interactions
+        // Store username globally
+        let currentUsername = 'Loading...';
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // Get username from server
-            fetch('/get_username')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.username) {
-                        document.getElementById('usernameDisplay').textContent = data.username;
-                    } else {
-                        window.location.href = 'http://localhost/hack/index.html';
-                    }
-                });
+            // Load username immediately
+            loadUsername();
+            
+            // Check user's access status
+            checkAccessStatus();
 
             // Copy UPI ID functionality
             const copyUpiBtn = document.getElementById('copyUpiBtn');
@@ -588,41 +560,21 @@
                 });
             });
 
-            // Open any UPI app
+            // Open UPI app functionality
             document.getElementById('openUpiAppBtn').addEventListener('click', function() {
                 const upiId = 'sanketgudade2004@okicici';
                 const amount = '1';
                 const note = 'SmartQueryBot Pro Subscription';
                 
-                // Try to open UPI apps in sequence
-                const upiLinks = [
-                    `upi://pay?pa=${upiId}&pn=SmartQueryBot&am=${amount}&tn=${note}`,
-                    `tez://upi/pay?pa=${upiId}&pn=SmartQueryBot&am=${amount}&tn=${note}`,
-                    `phonepe://pay?pa=${upiId}&pn=SmartQueryBot&am=${amount}&tn=${note}`,
-                    `paytmmp://pay?pa=${upiId}&pn=SmartQueryBot&am=${amount}&tn=${note}`,
-                    `amazonpay://pay?pa=${upiId}&pn=SmartQueryBot&am=${amount}&tn=${note}`
-                ];
+                // Try to open UPI app
+                window.location.href = `upi://pay?pa=${upiId}&pn=SmartQueryBot&am=${amount}&tn=${note}`;
                 
-                // Function to try opening links one by one
-                const tryOpenLink = (index) => {
-                    if (index >= upiLinks.length) {
-                        // Fallback to copying UPI ID
-                        navigator.clipboard.writeText(upiId).then(() => {
-                            showStatus('UPI ID copied to clipboard. Please paste it in your UPI app.', 'success');
-                        });
-                        return;
+                // Fallback if UPI app not installed
+                setTimeout(() => {
+                    if (!document.hidden) {
+                        showStatus('No UPI app detected. Please use another payment method.', 'error');
                     }
-                    
-                    const link = document.createElement('a');
-                    link.href = upiLinks[index];
-                    link.click();
-                    
-                    setTimeout(() => {
-                        tryOpenLink(index + 1);
-                    }, 300);
-                };
-                
-                tryOpenLink(0);
+                }, 500);
             });
 
             // File upload handling
@@ -634,16 +586,10 @@
             fileUpload.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    // Check file size (5MB max)
+                    // Validate file size (max 5MB)
                     if (file.size > 5 * 1024 * 1024) {
                         showStatus('File size exceeds 5MB limit', 'error');
-                        return;
-                    }
-                    
-                    // Check file type
-                    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-                    if (!validTypes.includes(file.type)) {
-                        showStatus('Please upload JPG, PNG or PDF file', 'error');
+                        fileUpload.value = '';
                         return;
                     }
                     
@@ -674,78 +620,141 @@
 
             // Verify button functionality
             const verifyBtn = document.getElementById('verifyBtn');
-            verifyBtn.addEventListener('click', function() {
+            verifyBtn.addEventListener('click', async function() {
                 const transactionId = document.getElementById('transactionId').value.trim();
                 const file = fileUpload.files[0];
                 
-                if (!transactionId) {
-                    showStatus('Please enter a transaction ID', 'error');
+                if (!transactionId || !file) {
+                    showStatus('Please complete all fields', 'error');
                     return;
                 }
-                
-                if (!file) {
-                    showStatus('Please upload payment receipt', 'error');
-                    return;
-                }
-                
-                // Show loading state
-                verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-                verifyBtn.disabled = true;
-                
-                // Create FormData to send to server
+
                 const formData = new FormData();
                 formData.append('transaction_id', transactionId);
                 formData.append('receipt', file);
-                formData.append('username', document.getElementById('usernameDisplay').textContent);
-                formData.append('plan', 'pro'); // Or get this from URL params
-                
-                // Send to server for verification
-                fetch('/submit_payment', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verified! Redirecting...';
-                        showStatus('Payment submitted for verification! Admin will review it shortly.', 'success');
-                        
-                        // Redirect to thank you page or home
-                        setTimeout(() => {
-                            window.location.href = '/thank_you';
-                        }, 1500);
-                    } else {
-                        verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify Payment';
-                        verifyBtn.disabled = false;
-                        showStatus(data.message || 'Verification failed. Please try again.', 'error');
-                    }
-                })
-                .catch(error => {
-                    verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify Payment';
-                    verifyBtn.disabled = false;
-                    showStatus('Error verifying payment. Please try again.', 'error');
-                    console.error('Error:', error);
-                });
-            });
+                formData.append('amount', '1.00');
+                formData.append('upi_method', 'Any UPI App');
 
-            // Show status message
-            function showStatus(message, type) {
-                const statusDiv = document.getElementById('statusMessage');
-                statusDiv.textContent = message;
-                statusDiv.className = `status-message ${type}`;
-                statusDiv.style.display = 'block';
-                
-                setTimeout(() => {
-                    statusDiv.style.display = 'none';
-                }, 5000);
-            }
+                verifyBtn.disabled = true;
+                verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+                try {
+                    const response = await fetch('/submit_payment', {
+                        method: 'POST',
+                        credentials: 'include',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(errorText || 'Payment verification failed');
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showStatus('Payment submitted for verification!', 'success');
+                        await checkAccessStatus();
+                    } else {
+                        showStatus(data.message || 'Verification failed', 'error');
+                    }
+                } catch (error) {
+                    console.error('Payment error:', error);
+                    showStatus('Payment failed: ' + error.message, 'error');
+                } finally {
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify Payment';
+                    document.getElementById('usernameDisplay').textContent = currentUsername;
+                }
+            });
         });
 
-        function logout() {
-            fetch('/logout')
-                .then(() => {
-                    window.location.href = 'http://localhost/hack/index.html';
+        // Load username function
+        function loadUsername() {
+            fetch('/get_username', {
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                if (data.username) {
+                    currentUsername = data.username;
+                    document.getElementById('usernameDisplay').textContent = currentUsername;
+                } else {
+                    window.location.href = '/';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading username:', error);
+                window.location.href = '/';
+            });
+        }
+
+        // Check access status
+        async function checkAccessStatus() {
+            try {
+                const response = await fetch('/check_access', {
+                    credentials: 'include'
                 });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                const accessInfo = document.getElementById('accessInfo');
+                accessInfo.style.display = 'block';
+                
+                if (data.hasAccess) {
+                    accessInfo.className = 'access-info';
+                    accessInfo.innerHTML = `
+                        <i class="fas fa-check-circle"></i> 
+                        You have premium access until ${data.expiresAt}
+                    `;
+                } else if (data.pending) {
+                    accessInfo.className = 'access-info';
+                    accessInfo.innerHTML = `
+                        <i class="fas fa-clock"></i> 
+                        Your payment is under review. Please check back later.
+                    `;
+                } else {
+                    accessInfo.className = 'access-info no-access';
+                    accessInfo.innerHTML = `
+                        <i class="fas fa-lock"></i> 
+                        You don't have active subscription
+                    `;
+                }
+            } catch (error) {
+                console.error('Error checking access:', error);
+            }
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.className = `status-message ${type}`;
+            statusElement.style.display = 'block';
+            
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Logout function
+        function logout() {
+            fetch('/logout', {
+                credentials: 'include'
+            })
+            .then(() => {
+                window.location.href = '/';
+            })
+            .catch(error => {
+                console.error('Logout error:', error);
+                window.location.href = '/';
+            });
         }
     </script>
 </body>

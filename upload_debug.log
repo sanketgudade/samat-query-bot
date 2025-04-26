@@ -1,0 +1,22 @@
+==== New Request ====
+POST Data: Array
+(
+    [transaction_id] => 7499755295
+    [amount] => 1.00
+    [upi_method] => Any UPI App
+)
+
+FILES Data: Array
+(
+    [receipt] => Array
+        (
+            [name] => cupcake.jpeg
+            [full_path] => cupcake.jpeg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpBDEA.tmp
+            [error] => 0
+            [size] => 9279
+        )
+
+)
+

@@ -953,15 +953,25 @@ function stopListening() {
         
 
         function smartQueryBot() {
-            document.addEventListener('DOMContentLoaded', function() {
-              const advanceSmartQueryBotBtn = document.getElementById('advanceSmartQueryBotBtn');
-              if (advanceSmartQueryBotBtn) {
-                advanceSmartQueryBotBtn.addEventListener('click', function() {
-                  window.location.href = '/pricing';
+            fetch('/check_payment_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.has_access) {
+                        // Directly open AdvanceSQB if payment is verified
+                        window.location.href = 'http://127.0.0.1:5000/AdvanceSQB';
+                    } else if (data.pending) {
+                        // Show payment pending message
+                        alert('Your payment is under review. Please wait for admin approval.');
+                    } else {
+                        // Redirect to pricing page if no payment exists
+                        window.location.href = '/pricing';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    window.location.href = '/pricing';
                 });
-              }
-            });
-          }
+        }
           
           // You would then call this function when you want the button's functionality to be active,
           // for example, after the DOM is loaded or when the button is dynamically added to the page.
