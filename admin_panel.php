@@ -716,9 +716,15 @@ $total_revenue = $db->query("SELECT SUM(amount) as total FROM payments WHERE sta
 // Handle payment approval
 // Enhanced payment approval handler
 // Handle payment approval
-$('.btn-approve').click(function() {
+// Handle payment approval
+// // Handle payment rejection
+// Handle payment approval
+// Handle payment approval with event delegation
+$(document).on('click', '.btn-approve', function() {
     const paymentId = $(this).data('id');
     const row = $(this).closest('tr');
+    
+    console.log("Approve button clicked for payment ID:", paymentId);
     
     if (confirm('Approve this payment and grant access?')) {
         const button = $(this);
@@ -734,6 +740,7 @@ $('.btn-approve').click(function() {
             },
             dataType: 'json',
             success: function(response) {
+                console.log("Server response:", response);
                 if (response.success) {
                     // Update the row immediately
                     row.find('.status')
@@ -741,16 +748,17 @@ $('.btn-approve').click(function() {
                         .addClass('status-verified')
                         .text('Verified');
                     
-                    // Update expiration date
-                    const expiresAt = new Date();
-                    expiresAt.setMonth(expiresAt.getMonth() + 1);
-                    row.find('td:nth-child(8)').text(expiresAt.toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    }));
+                    // Update expiration date if provided
+                    if (response.expires_at) {
+                        const expiresAt = new Date(response.expires_at);
+                        row.find('td:nth-child(8)').text(expiresAt.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }));
+                    }
                     
                     // Update actions
                     row.find('td:last').html(`
@@ -764,21 +772,23 @@ $('.btn-approve').click(function() {
                     // Update stats counters
                     updateStatsCounters();
                 } else {
-                    showAlert('Error: ' + (response.message || 'Failed to approve payment'), 'error');
+                    const errorMsg = response.message || 'Failed to approve payment';
+                    console.error("Error:", errorMsg);
+                    showAlert('Error: ' + errorMsg, 'error');
                     button.prop('disabled', false).html('<i class="fas fa-check"></i> Verify');
                 }
             },
             error: function(xhr, status, error) {
+                console.error("AJAX Error:", status, error, xhr.responseText);
                 showAlert('Error: ' + error, 'error');
-                console.error('AJAX Error:', status, error, xhr.responseText);
                 button.prop('disabled', false).html('<i class="fas fa-check"></i> Verify');
             }
         });
     }
 });
 
-// Handle payment rejection
-$('.btn-reject').click(function() {
+// Handle payment rejection with event delegation
+$(document).on('click', '.btn-reject', function() {
     const paymentId = $(this).data('id');
     const row = $(this).closest('tr');
     const reason = prompt('Enter rejection reason:');
@@ -829,7 +839,6 @@ $('.btn-reject').click(function() {
         alert('Please provide a rejection reason');
     }
 });
-
 // Function to update stats counters
 function updateStatsCounters() {
     $.get('get_stats.php', function(data) {

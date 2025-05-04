@@ -936,7 +936,7 @@ function stopListening() {
                     console.error('Error:', error);
                     window.location.href = '/login';
                 });
-            displayAIMessage("Hello! I am SmartQueryBot. How can I assist you today?");
+            displayAIMessage("Hello Dear! I am SmartQueryBot. How can I assist you today?");
         });
 
         function openSidebar() {
@@ -951,28 +951,57 @@ function stopListening() {
             location.reload();
         }
         
-
+        
         function smartQueryBot() {
-            fetch('/check_payment_status')
-                .then(response => response.json())
+            // Show loading state
+            const botButton = document.querySelector('[data-tooltip="Advance SmartQueryBot"]');
+            const originalTooltip = botButton.getAttribute('data-tooltip');
+            botButton.setAttribute('data-tooltip', 'Checking access...');
+            
+            fetch('/check_access')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.has_access) {
-                        // Directly open AdvanceSQB if payment is verified
-                        window.location.href = 'http://127.0.0.1:5000/AdvanceSQB';
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    if (data.hasAccess) {
+                        // User has verified payment - redirect to advanced bot
+                        window.location.href = '/AdvanceSQB';
                     } else if (data.pending) {
-                        // Show payment pending message
+                        // Payment is pending admin approval
                         alert('Your payment is under review. Please wait for admin approval.');
-                    } else {
-                        // Redirect to pricing page if no payment exists
                         window.location.href = '/pricing';
+                    } else {
+                        // No payment found or payment rejected
+                        let message = 'Advanced features require payment.';
+                        if (data.message === 'No payment record found') {
+                            message += '\nYou have not made any payment yet.';
+                        } else {
+                            message += '\nYour payment is not verified or has expired.';
+                        }
+                        
+                        if (confirm(message + '\n\nGo to pricing page?')) {
+                            window.location.href = '/pricing';
+                        }
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    window.location.href = '/pricing';
+                    console.error('Error checking access:', error);
+                    alert('Error checking your access status: ' + error.message);
+                })
+                .finally(() => {
+                    botButton.setAttribute('data-tooltip', originalTooltip);
                 });
         }
-          
+       
+
+
           // You would then call this function when you want the button's functionality to be active,
           // for example, after the DOM is loaded or when the button is dynamically added to the page.
           // Example of calling it:
@@ -1270,21 +1299,7 @@ function stopListening() {
             // ... your existing DOMContentLoaded code
         });
 
-        function smartQueryBot() {
-            fetch('/check_session')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.logged_in) {
-                        window.location.href = '/pricing';
-                    } else {
-                        window.location.href = 'http://localhost/hack/index.html';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    window.location.href = 'http://localhost/hack/index.html';
-                });
-        }
+        
         </script>
 </body>
 </html>

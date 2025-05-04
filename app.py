@@ -324,30 +324,43 @@ def check_access():
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            # Check if user has any payment records
-            sql = """SELECT * FROM payments 
+            # Get the most recent payment for the user
+            sql = """SELECT status, access_expires_at, created_at 
+                     FROM payments 
                      WHERE username = %s 
-                     ORDER BY payment_date DESC 
+                     ORDER BY created_at DESC 
                      LIMIT 1"""
             cursor.execute(sql, (session['user_name'],))
             payment = cursor.fetchone()
 
             if payment:
+                current_time = datetime.now()
+                expires_at = payment['access_expires_at']
+                
                 # Check if payment is verified and not expired
                 is_active = (payment['status'] == 'verified' and 
-                            datetime.now() < payment['access_expires_at'])
+                            (expires_at is None or expires_at > current_time))
+                
                 return jsonify({
                     'hasAccess': is_active,
                     'pending': payment['status'] == 'pending',
-                    'expiresAt': payment['access_expires_at'].strftime('%Y-%m-%d %H:%M:%S') if payment['access_expires_at'] else None
+                    'expiresAt': expires_at.strftime('%Y-%m-%d %H:%M:%S') if expires_at else None,
+                    'status': payment['status'],
+                    'message': 'Payment found'
                 })
-            return jsonify({'hasAccess': False, 'pending': False})
+            
+            return jsonify({
+                'hasAccess': False,
+                'pending': False,
+                'message': 'No payment record found'
+            })
+            
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
         if connection:
             connection.close()
-
+            
 @app.route('/submit_payment', methods=['POST'])
 def submit_payment():
     if 'user_name' not in session:
